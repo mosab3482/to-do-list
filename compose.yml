@@ -1,0 +1,32 @@
+services:
+  postgresdb:
+    image: postgres
+    restart: unless-stopped
+    env_file: ./.env
+    environment:
+      - PGUSER=$PG_USER
+      - PGPASSWORD=$PG_PASSWORD
+      - PGDATABASE=$PG_DATABASE
+    ports:
+      - $PG_HOST_PORT:$PG_DOCKER_PORT
+    volumes:
+      - db:/var/lib/postgres
+  app:
+    depends_on:
+      - postgresdb
+    build: .
+    restart: unless-stopped
+    env_file: ./.env
+    ports:
+      - $APP_HOST_PORT:$APP_DOCKER_PORT
+    environment:
+      - PGHOST=postgresdb
+      - PGUSER=$PG_USER
+      - PGPASSWORD=$PG_PASSWORD
+      - PGDATABASE=$PG_DATABASE
+      - PGPORT=$PG_DOCKER_PORT
+    stdin_open: true
+    tty: true
+
+volumes:
+  db:

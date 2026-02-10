@@ -13,7 +13,7 @@ const getAllTasks = async (req, res) => {
 
 const createTask = async (req, res) => {
   try {
-    const task = await db.addTask(//);
+    const task = await db.addTask("new");
     res.status(201).json(task);
   } catch (e) {
     console.log(e.message);
@@ -37,7 +37,7 @@ const updateTask = async (req, res) => {
   try {
     const taskID = req.params.id;
     const updata = req.body;
-    const task = await Task.findOneAndUpdate({ _id: taskID }, updata);
+    const task = await db.updateTask( taskID , updata);
 
     res.status(200).json({ id: taskID, data: updata });
   } catch (e) {
@@ -48,7 +48,7 @@ const updateTask = async (req, res) => {
 const deleteTask = async (req, res) => {
   const taskID = req.params.id;
   try {
-    const taskData = await Task.findOneAndDelete({ _id: taskID });
+    const taskData = await db.deleteTask(taskID);
     if (!taskData) {
       return res.status(404).json({ msg: `no task with id : ${taskID}` });
     }
