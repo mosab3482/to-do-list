@@ -1,31 +1,9 @@
-require("dotenv").config()
 const { Pool } = require("pg")
 
-
-async function initDB() {
-	const pool = new Pool({
-		host: process.env.PG_HOST,
-		port: process.env.PG_HOST_PORT,
-		user: process.env.PG_USER,
-		password: process.env.PG_PASSWORD,
-		database: process.env.PG_DATABASE,
-	})
-
-	pool.on('connect', () => {
-		console.log('Database connected')
-	})
-
-	pool.on('error', (err) => {
-		console.log('Database Error: ', err)
-	})
-
-	const createTableQuery = 'CREATE TABLE IF NOT EXISTS tasks ( id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL, completed BOOLEAN NOT NULL DEFAULT FALSE);';
-
-	await pool.query(createTableQuery);
-	console.log("table created---------------")
-
-	return new DatabaseHelper(pool);
+if (!process.env.DOCKER_ENV) {
+	require("dotenv").config()
 }
+
 
 class DatabaseHelper {
 	constructor(pool) {
@@ -73,11 +51,11 @@ class DatabaseHelper {
 
 
 const pool = new Pool({
-	host: process.env.PG_HOST,
-	port: process.env.PG_HOST_PORT,
-	user: process.env.PG_USER,
-	password: process.env.PG_PASSWORD,
-	database: process.env.PG_DATABASE,
+	host: process.env.POSTGRES_HOST,
+	port: process.env.POSTGRES_PORT,
+	user: process.env.POSTGRES_USER,
+	password: process.env.POSTGRES_PASSWORD,
+	database: process.env.POSTGRES_DATABASE,
 })
 
 pool.on('connect', () => {

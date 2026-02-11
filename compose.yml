@@ -2,13 +2,9 @@ services:
   postgresdb:
     image: postgres
     restart: unless-stopped
-    env_file: ./.env
+    env_file: .env
     environment:
-      - PGUSER=$PG_USER
-      - PGPASSWORD=$PG_PASSWORD
-      - PGDATABASE=$PG_DATABASE
-    ports:
-      - $PG_HOST_PORT:$PG_DOCKER_PORT
+      - DOCKER_ENV=true
     volumes:
       - db:/var/lib/postgres
   app:
@@ -16,15 +12,11 @@ services:
       - postgresdb
     build: .
     restart: unless-stopped
-    env_file: ./.env
+    env_file: .env
     ports:
-      - $APP_HOST_PORT:$APP_DOCKER_PORT
+      - $APP_PORT:3000
     environment:
-      - PGHOST=postgresdb
-      - PGUSER=$PG_USER
-      - PGPASSWORD=$PG_PASSWORD
-      - PGDATABASE=$PG_DATABASE
-      - PGPORT=$PG_DOCKER_PORT
+      - DOCKER_ENV=true
     stdin_open: true
     tty: true
 
