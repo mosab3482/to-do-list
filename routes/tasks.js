@@ -4,7 +4,7 @@ const db = require("../db/connect.js")
 
 const getAllTasks = async (req, res) => {
   try {
-    const tasks = await db.getAllTasks();
+    const tasks = db.getAllTasks();
     res.status(200).json(tasks);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -13,7 +13,8 @@ const getAllTasks = async (req, res) => {
 
 const createTask = async (req, res) => {
   try {
-    const task = await db.addTask("new");
+	newtask = req.body
+	const task = await db.addTask(newtask.name);
     res.status(201).json(task);
   } catch (e) {
     console.log(e.message);
@@ -24,6 +25,7 @@ const getTask = async (req, res) => {
   const taskID = req.params.id;
   try {
     taskdata = await db.getOneTask(taskID);
+	console.log(taskID, taskdata)
     if (!taskdata) {
       return res.status(404).json({ msg: `no task with id : ${taskID}` });
     }
@@ -57,7 +59,7 @@ const deleteTask = async (req, res) => {
     res.status(500).json({ mes: e.message });
   }
 };
-
+// /api/v1/tasks
 router.route("/")
 	.get(getAllTasks)
 	.post(createTask);
