@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    isVirified: { type: Boolean, default: false },
+    isVerified: { type: Boolean, default: false },
     isLoggedIn: { type: Boolean, default: false },
     token: { type: String, default: null },
     otp: { type: String, default: null },

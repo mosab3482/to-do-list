@@ -27,10 +27,10 @@ const verifyMail = async (token, email) => {
   };
   transporter.sendMail(mailConfigurations, function (error, info) {
     if (error) {
-      throw new Error(error);
+      console.log(error);
     }
     console.log("email is send seccessfly");
-    consle.log(info);
+    console.log(info);
   });
 };
 
