@@ -1,0 +1,24 @@
+services:
+  postgresdb:
+    image: postgres
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - DOCKER_ENV=true
+    volumes:
+      - db:/var/lib/postgres
+  app:
+    depends_on:
+      - postgresdb
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - $APP_PORT:3000
+    environment:
+      - DOCKER_ENV=true
+    stdin_open: true
+    tty: true
+
+volumes:
+  db:
