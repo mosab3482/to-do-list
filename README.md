@@ -33,26 +33,41 @@ This is a simple yet robust To-Do List application built with Node.js, Express, 
    git clone <repository_url>
    cd to-do-list
    ```
+
 2. **Create a `.env` file:**
    Create a `.env` file in the root directory with the following variables. Replace placeholders with your actual values.
    ```
-   MONGO_URI=mongodb://mongodb:27017/todoapp
-   JWT_SECRET=your_jwt_secret_key_here
-   EMAIL_USER=your_email@example.com
-   EMAIL_PASS=your_email_password
-   BASE_URL=http://localhost:3000
+   APP_PORT=3000
+   MONGO_HOST=mongodb
+   MONGO_PORT=27017
+   MONGO_INITDB_DATABASE=mydb
+   SECRET_KEY=your_jwt_secret_key_here
+   MALL_USER=your_email@example.com
+   MALL_PASS=your_email_password
    ```
-   **Note:** For `MONGO_URI`, if running locally without Docker, it might be `mongodb://localhost:27017/todoapp`.
-   `EMAIL_USER` and `EMAIL_PASS` are for Nodemailer to send verification emails. You might need to set up an app password if using services like Gmail.
+   **Note:** 
+   - `SECRET_KEY` is used for JWT token signing and verification.
+   - `MALL_USER` and `MALL_PASS` are for Nodemailer to send verification emails. You might need to set up an app password if using services like Gmail.
+   - `MONGO_INITDB_DATABASE` specifies the MongoDB database name for the application.
 
-3. **Build and run the Docker containers:**
+3. **Start the application with Docker Compose:**
    ```bash
-   docker-compose up --build -d
+   docker compose up
    ```
-   This will build the Docker image for the Node.js application and start both the application and MongoDB containers.
+   This command will:
+   - Build the Docker image for the Node.js application
+   - Start the MongoDB container
+   - Start the Node.js application container
+   - Connect both containers on a shared network
 
 4. **Access the application:**
    The API will be running on `http://localhost:3000`.
+
+5. **Stop the application:**
+   ```bash
+   docker compose down
+   ```
+   This stops and removes the containers. Use `docker compose down -v` to also remove the MongoDB volume.
 
 ### Running Locally (without Docker)
 
@@ -66,7 +81,16 @@ This is a simple yet robust To-Do List application built with Node.js, Express, 
    npm install
    ```
 3. **Create a `.env` file:**
-   Create a `.env` file in the root directory with the same variables as above, adjusting `MONGO_URI` if necessary (e.g., `mongodb://localhost:27017/todoapp`).
+   Create a `.env` file in the root directory with the same variables as above:
+   ```
+   APP_PORT=3000
+   MONGO_HOST=localhost
+   MONGO_PORT=27017
+   MONGO_INITDB_DATABASE=mydb
+   SECRET_KEY=your_jwt_secret_key_here
+   MALL_USER=your_email@example.com
+   MALL_PASS=your_email_password
+   ```
 
 4. **Start the MongoDB server:**
    Ensure your local MongoDB instance is running.
