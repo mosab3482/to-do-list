@@ -1,20 +1,20 @@
 services:
-  postgresdb:
-    image: postgres
+  mongodb:
+    image: mongo:4.4
     restart: unless-stopped
     env_file: .env
     environment:
       - DOCKER_ENV=true
     volumes:
-      - db:/var/lib/postgres
+      - db:/data/db
   app:
     depends_on:
-      - postgresdb
+      - mongodb
     build: .
     restart: unless-stopped
     env_file: .env
     ports:
-      - $APP_PORT:3000
+      - "${APP_PORT}:${APP_PORT}"
     environment:
       - DOCKER_ENV=true
     stdin_open: true
