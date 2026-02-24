@@ -2,6 +2,7 @@ const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const verifyMail = require("../emailVerify/verifyMall");
+const sendOtpMail = require("../emailVerify/sendOtpMail");
 const Session = require("../models/sessionModel");
 const registerUser = async (req, res) => {
   try {
@@ -136,6 +137,7 @@ const loginUser = async (req, res) => {
     );
     user.isLoggedIn = true;
     await user.save();
+
     return res.status(200).json({
       success: true,
       message: `Welcome back ${user.username}`,
@@ -150,5 +152,144 @@ const loginUser = async (req, res) => {
     });
   }
 };
+const logoutUser = async (req, res) => {
+  try {
+    const userId = req.userId;
+    await Session.deleteMany({ userId });
+    await User.findByIdAndUpdate(userId, { isLoggedIn: false });
+    return res.status(200).json({
+      success: true,
+      message: "logout successfully",
+    });
+  } catch (e) {
+    res.status(500).json({
+      success: false,
+      message: e.message,
+    });
+  }
+};
 
-module.exports = { registerUser, verifiction, loginUser };
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expire = new Date(Date.now() + 10 * 60 * 1000);
+    user.otp = otp;
+    user.otpExpiry = expire;
+    await user.save();
+    await sendOtpMail(email, otp);
+    return res.status(200).json({
+      success: true,
+      message: "Otp send to your email",
+    });
+  } catch (e) {
+    res.status(500).json({
+      success: false,
+      message: e.message,
+    });
+  }
+};
+
+const verifyOTP = async (req, res) => {
+  try {
+    const { otp } = req.body;
+    const email = req.params.email;
+    if (!otp) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP is requried",
+      });
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    if (!user.otp || !user.otpExpiry) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP not genrated or already verified",
+      });
+    }
+    if (user.otpExpiry < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP has expired. Please request a new one",
+      });
+    }
+    if (user.otp !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP",
+      });
+    }
+    user.otp = null;
+    user.otpExpiry = null;
+    await user.save();
+    return res.status(200).json({
+      success: true,
+      message: "OTP verified successfuly",
+    });
+  } catch (e) {
+    res.status(500).json({
+      success: false,
+      message: e.message,
+    });
+  }
+};
+
+const changePassword = async (req, res) => {
+  const { newPassword, confirmPassword } = req.body;
+  const email = req.params.email;
+  try {
+    if (!newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Password do not match",
+      });
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+    res.status(200).json({
+      success: true,
+      message: "Password changed successfuly",
+    });
+  } catch (e) {
+    res.status(500).json({
+      success: false,
+      message: e.message,
+    });
+  }
+};
+module.exports = {
+  registerUser,
+  verifiction,
+  loginUser,
+  logoutUser,
+  forgotPassword,
+  verifyOTP,
+  changePassword,
+};

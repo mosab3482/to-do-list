@@ -18,11 +18,11 @@ app.use("/user", userRout);
 
 const start = async () => {
   try {
-	const mongouri = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${process.env.MONGO_INITDB_DATABASE}`;
-	console.log(mongouri)
+    const mongouri = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${process.env.MONGO_INITDB_DATABASE}`;
+    console.log(mongouri);
     await connectDB(mongouri);
     console.log("connected to db");
-	const APP_PORT = process.env.APP_PORT;
+    const APP_PORT = process.env.APP_PORT;
     app.listen(APP_PORT, console.log("server is running on port " + APP_PORT));
   } catch (e) {
     console.log(e.message);
