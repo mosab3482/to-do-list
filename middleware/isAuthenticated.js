@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
+
 const isAuthenticated = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -26,12 +27,18 @@ const isAuthenticated = async (req, res, next) => {
       if (error.name === "TokenExpiredError") {
         return res.status(401).json({
           success: false,
-          message: "Access token has expired, refresh your token",
+          message: "Access token has expired",
+        });
+      }
+      if (error.name === "JsonWebTokenError") {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid token",
         });
       }
       return res.status(401).json({
         success: false,
-        message: "Invalid token",
+        message: "Token verification failed",
       });
     }
   } catch (e) {

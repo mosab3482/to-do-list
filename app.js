@@ -3,16 +3,40 @@ const connectDB = require("./db/connect");
 const express = require("express");
 const app = express();
 const tasks = require("./routes/tasks");
-const cros = require("cors");
+const cors = require("cors");
 const userRout = require("./routes/userRout");
+const rateLimt = require("express-rate-limit");
+
+const allowedOrigins = (
+  process.env.ALLOWED_ORIGINS || "http://localhost:3000"
+).split(",");
+
 app.use(
-  cros({
-    origin: "*",
+  cors({
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
-//middleware
+
+const loginLimiter = rateLimt({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: "Too many login attempts, please try again later",
+  standerHeaders: true,
+  legacyHeaders: false,
+});
+
+const registerLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: "Too many register attempts, please try again later",
+  standerHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use(express.json());
-//routes
+
 app.use("/api/v1/tasks", tasks);
 app.use("/user", userRout);
 

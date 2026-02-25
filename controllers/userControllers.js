@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const verifyMail = require("../emailVerify/verifyMall");
 const sendOtpMail = require("../emailVerify/sendOtpMail");
 const Session = require("../models/sessionModel");
+
 const registerUser = async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -34,8 +35,7 @@ const registerUser = async (req, res) => {
     await newUser.save();
     return res.status(201).json({
       success: true,
-      message: "User registered successfully",
-      data: newUser,
+      message: "User registered successfully. check your email to verify",
     });
   } catch (e) {
     return res.status(500).json({
@@ -57,17 +57,17 @@ const verifiction = async (req, res) => {
     const token = authHeader.split(" ")[1];
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.SECRET_KEY);
+      decoded = jwt.verify(token, process.env.REGISTER_SECRET);
     } catch (e) {
       if (e.name === "TokenExpiredError") {
         return res.status(400).json({
           success: false,
-          message: "The register token was expired",
+          message: "Register token expired",
         });
       }
       return res.status(400).json({
         success: false,
-        message: "Token verificton failed",
+        message: "Token verificaton failed",
       });
     }
     const user = await User.findById(decoded.id);
@@ -77,7 +77,10 @@ const verifiction = async (req, res) => {
         message: "User not found",
       });
     }
-    ((user.token = null), (user.isVerified = true), await user.save());
+    user.token = null;
+    user.isVerified = true;
+    await user.save();
+
     return res.status(200).json({
       success: true,
       message: "Email verified successfully",
@@ -102,20 +105,20 @@ const loginUser = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "unauthrized access",
+        message: "Invalid email or password",
       });
     }
     const passwordCheck = await bcrypt.compare(password, user.password);
     if (!passwordCheck) {
       return res.status(401).json({
         success: false,
-        message: "Password is not correct",
+        message: "Invalid email or password",
       });
     }
     if (!user.isVerified) {
       return res.status(403).json({
         success: false,
-        message: "Verify your account then login",
+        message: "Please verify your email first",
       });
     }
 
@@ -147,7 +150,6 @@ const loginUser = async (req, res) => {
       message: `Welcome back ${user.username}`,
       accessToken,
       refreshToken,
-      user,
     });
   } catch (err) {
     return res.status(500).json({
@@ -252,9 +254,10 @@ const verifyOTP = async (req, res) => {
 };
 
 const changePassword = async (req, res) => {
-  const { newPassword, confirmPassword } = req.body;
-  const email = req.params.email;
   try {
+    const { newPassword, confirmPassword } = req.body;
+    const email = req.params.email;
+
     if (!newPassword || !confirmPassword) {
       return res.status(400).json({
         success: false,
@@ -274,15 +277,21 @@ const changePassword = async (req, res) => {
         message: "User not found",
       });
     }
+    if (user.otp !== null || user.otpExpiry !== null) {
+      return res.status(400).json({
+        success: false,
+        message: "Please verify your OTP first",
+      });
+    }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     await user.save();
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Password changed successfuly",
     });
   } catch (e) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: e.message,
     });
