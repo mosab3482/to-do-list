@@ -2,57 +2,115 @@ const Task = require("../models/task");
 
 const getAllTasks = async (req, res) => {
   try {
-    const tasks = await Task.find({});
-    res.status(200).json(tasks);
+    const userId = req.userId;
+    const tasks = (await Task.find({ userId })).sort({ createAt: -1 });
+    res.status(200).json({
+      success: true,
+      data: tasks,
+    });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({
+      success: false,
+      message: e.message,
+    });
   }
 };
 
 const createTask = async (req, res) => {
   try {
-    const task = await Task.create(req.body);
-    res.status(201).json(task);
+    const { name } = req.body;
+    const userId = req.userId;
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        message: "Task name is require",
+      });
+    }
+
+    const task = await Task.create({ name, userId });
+    res.status(201).json({
+      success: true,
+      data: task,
+    });
   } catch (e) {
-    console.log(e.message);
+    res.status(500).json({
+      success: false,
+      message: e.message,
+    });
   }
 };
 
 const getTask = async (req, res) => {
   const taskID = req.params.id;
+  const userId = req.userId;
   try {
-    taskdata = await Task.findOne({ _id: taskID });
-    if (!taskdata) {
-      return res.status(404).json({ msg: `no task with id : ${taskID}` });
+    task = await Task.findOne({ _id: taskID, userId });
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        message: `no task with id : ${taskID}`,
+      });
     }
-    res.status(200).json(taskdata);
+    res.status(200).json({
+      success: true,
+      data: task,
+    });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({
+      success: false,
+      message: e.message,
+    });
   }
 };
 
 const updateTask = async (req, res) => {
   try {
     const taskID = req.params.id;
-    const updata = req.body;
-    const task = await Task.findOneAndUpdate({ _id: taskID }, updata);
-
-    res.status(200).json({ id: taskID, data: updata });
+    const userId = req.userId;
+    const updateData = req.body;
+    const task = await Task.findOneAndUpdate(
+      { _id: taskID, userId },
+      updateData,
+      { new: true },
+    );
+    if (!task) {
+      res.status(404).json({
+        succss: false,
+        message: "Task not found",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      data: task,
+    });
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    res.status(500).json({
+      success: false,
+      message: e.message,
+    });
   }
 };
 
 const deleteTask = async (req, res) => {
   const taskID = req.params.id;
+  const userId = req.userId;
   try {
-    const taskData = await Task.findOneAndDelete({ _id: taskID });
-    if (!taskData) {
-      return res.status(404).json({ msg: `no task with id : ${taskID}` });
+    const task = await Task.findOneAndDelete({ _id: taskID, userId });
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        message: "Task not found",
+      });
     }
-    res.status(200).json({ meg: "task is deleted" });
+    res.status(200).json({
+      success: true,
+      message: "Task deleted successfully",
+    });
   } catch (e) {
-    res.status(500).json({ mes: e.message });
+    res.status(500).json({
+      success: false,
+      message: e.message,
+    });
   }
 };
 

@@ -10,23 +10,9 @@ const isAuthenticated = async (req, res, next) => {
       });
     }
     const token = authHeader.split(" ")[1];
-    jwt.verify(token, process.env.SECRET_KEY, async (error, decoded) => {
-      if (error) {
-        if (error.name === "TokenExpiredError") {
-          return res.status(400).json({
-            success: false,
-            message:
-              "Access token has expired, use refreshtoken to generate new one",
-          });
-        }
-        return res.status(400).json({
-          success: false,
-          message: "Access token is missing or invalid",
-        });
-      }
-      console.log(decoded);
-      const { userId } = decoded;
-      const user = await User.findById(userId);
+    try {
+      const decoded = jwt.verify(token, process.env.ACCESS_SECRET);
+      const user = await User.findById(decoded.userId);
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -34,8 +20,20 @@ const isAuthenticated = async (req, res, next) => {
         });
       }
       req.userId = user._id;
+      req.user = user;
       next();
-    });
+    } catch (error) {
+      if (error.name === "TokenExpiredError") {
+        return res.status(401).json({
+          success: false,
+          message: "Access token has expired, refresh your token",
+        });
+      }
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token",
+      });
+    }
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }

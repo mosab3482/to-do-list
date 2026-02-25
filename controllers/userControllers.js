@@ -26,7 +26,7 @@ const registerUser = async (req, res) => {
       email,
       password: hashPassword,
     });
-    const token = jwt.sign({ id: newUser._id }, process.env.SECRET_KEY, {
+    const token = jwt.sign({ id: newUser._id }, process.env.REGISTER_SECRET, {
       expiresIn: "10m",
     });
     verifyMail(token, email);
@@ -125,12 +125,16 @@ const loginUser = async (req, res) => {
     }
 
     await Session.create({ userId: user._id });
-    const accessToken = jwt.sign({ userId: user._id }, process.env.SECRET_KEY, {
-      expiresIn: "1h",
-    });
+    const accessToken = jwt.sign(
+      { userId: user._id },
+      process.env.ACCESS_SECRET,
+      {
+        expiresIn: "1h",
+      },
+    );
     const refreshToken = jwt.sign(
       { userId: user._id },
-      process.env.SECRET_KEY,
+      process.env.REFRESH_SECRET,
       {
         expiresIn: "7d",
       },
@@ -284,6 +288,10 @@ const changePassword = async (req, res) => {
     });
   }
 };
+const refreshToken = async (req, res) => {
+  try {
+  } catch (e) {}
+};
 module.exports = {
   registerUser,
   verifiction,
@@ -292,4 +300,5 @@ module.exports = {
   forgotPassword,
   verifyOTP,
   changePassword,
+  refreshToken,
 };
