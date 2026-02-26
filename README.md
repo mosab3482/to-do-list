@@ -42,12 +42,12 @@ This is a simple yet robust To-Do List application built with Node.js, Express, 
    MONGO_PORT=27017
    MONGO_INITDB_DATABASE=mydb
    SECRET_KEY=your_jwt_secret_key_here
-   MALL_USER=your_email@example.com
-   MALL_PASS=your_email_password
+   MAIL_USER=your_email@example.com
+   MAIL_PASS=your_email_password
    ```
    **Note:** 
    - `SECRET_KEY` is used for JWT token signing and verification.
-   - `MALL_USER` and `MALL_PASS` are for Nodemailer to send verification emails. You might need to set up an app password if using services like Gmail.
+   - `MAIL_USER` and `MAIL_PASS` are for Nodemailer to send verification emails. You might need to set up an app password if using services like Gmail.
    - `MONGO_INITDB_DATABASE` specifies the MongoDB database name for the application.
 
 3. **Start the application with Docker Compose:**
@@ -88,8 +88,8 @@ This is a simple yet robust To-Do List application built with Node.js, Express, 
    MONGO_PORT=27017
    MONGO_INITDB_DATABASE=mydb
    SECRET_KEY=your_jwt_secret_key_here
-   MALL_USER=your_email@example.com
-   MALL_PASS=your_email_password
+   MAIL_USER=your_email@example.com
+   MAIL_PASS=your_email_password
    ```
 
 4. **Start the MongoDB server:**
