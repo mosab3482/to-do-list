@@ -8,8 +8,9 @@ const {
   deleteTask,
 } = require("../controllers/tasks");
 const { isAuthenticated } = require("../middleware/isAuthenticated");
+const checkSession = require("../middleware/checkSession");
 
-router.use(isAuthenticated);
+router.use(isAuthenticated, checkSession);
 
 router.route("/").get(getAllTasks).post(createTask);
 router.route("/:id").get(getTask).patch(updateTask).delete(deleteTask);

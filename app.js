@@ -6,7 +6,6 @@ const tasks = require("./routes/tasks");
 const cors = require("cors");
 const userRout = require("./routes/userRout");
 const rateLimt = require("express-rate-limit");
-const checkSession = require("./middleware/checkSession");
 
 const allowedOrigins = (
   process.env.ALLOWED_ORIGINS || "http://localhost:3000"
@@ -40,7 +39,7 @@ const apiLimter = rateLimt({
 
 app.use(express.json({ limit: "3mb" }));
 
-app.use("/api/v1/tasks", checkSession, apiLimter, tasks);
+app.use("/api/v1/tasks", apiLimter, tasks);
 
 app.use("/user/register", registerLimiter);
 app.use("/user/login", loginLimiter);

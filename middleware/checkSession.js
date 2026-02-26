@@ -2,7 +2,7 @@ const Session = require("../models/sessionModel");
 const checkSession = async (req, res, next) => {
   try {
     const userId = req.userId;
-    const session = Session.findOne({ userId });
+    const session = await Session.findOne({ userId });
     if (!session) {
       return res.status(401).json({
         success: false,
@@ -17,8 +17,5 @@ const checkSession = async (req, res, next) => {
     });
   }
 };
-userSchema.index(
-  { createdAt: 1 },
-  { expireAfterSeconds: 600, partialFilterExpression: { isVerified: false } },
-);
+
 module.exports = checkSession;
