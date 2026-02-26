@@ -9,7 +9,7 @@ const {
   forgotPassword,
   verifyOTP,
   changePassword,
-  refreshToken,
+  refreshTokenController,
 } = require("../controllers/userControllers");
 const { isAuthenticated } = require("../middleware/isAuthenticated");
 const {
@@ -20,9 +20,10 @@ const {
   emailSchema,
   otpSchema,
 } = require("../validators/userValidate");
+const validateResetPassword = require("../middleware/validateResetPassword");
 
 router.post("/register", validateUser(userSchema), registerUser);
-router.post("/verify", verifiction);
+router.post("/verify/:token", verifiction);
 
 router.post("/login", validateUser(loginSchema), loginUser);
 router.post("/logout", isAuthenticated, logoutUser);
@@ -32,8 +33,9 @@ router.post("/verify-otp/:email", validateUser(otpSchema), verifyOTP);
 router.post(
   "/change-password/:email",
   validateUser(passwordSchema),
+  validateResetPassword,
   changePassword,
 );
-router.post("/refresh-token", refreshToken);
+router.post("/refresh-token", refreshTokenController);
 
 module.exports = router;

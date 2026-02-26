@@ -10,28 +10,30 @@ const verifyMail = async (token, email) => {
     "utf-8",
   );
   const template = handlebars.compile(emailTemplateSourse);
-  const htmlToSend = template({ token: encodeURIComponent(token) });
+  const htmlToSend = template({
+    token: encodeURIComponent(token),
+    baseUrl: process.env.BASE_URL,
+  });
 
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: process.env.MALL_USER,
-      pass: process.env.MALL_PASS,
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASS,
     },
   });
   const mailConfigurations = {
-    from: process.env.MALL_USER,
+    from: process.env.MAIL_USER,
     to: email,
-    subject: "Email Virifiaction",
+    subject: "Email Verification",
     html: htmlToSend,
   };
-  transporter.sendMail(mailConfigurations, function (error, info) {
-    if (error) {
-      console.log(error);
-    }
-    console.log("email is send seccessfly");
+  try {
+    const info = await transporter.sendMail(mailConfigurations);
+    console.log("Email sent successfully");
     console.log(info);
-  });
+  } catch (error) {
+    console.error("Error sending email:", error);
+  }
 };
-
 module.exports = verifyMail;

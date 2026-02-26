@@ -47,14 +47,13 @@ const registerUser = async (req, res) => {
 
 const verifiction = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({
+    const token = req.params.token;
+    if (!token) {
+      return res.status(400).json({
         success: false,
-        message: "Authorization token is missing or invalid",
+        message: "Token is missing",
       });
     }
-    const token = authHeader.split(" ")[1];
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.REGISTER_SECRET);
@@ -75,6 +74,12 @@ const verifiction = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "User not found",
+      });
+    }
+    if (user.isVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "User already verified",
       });
     }
     user.token = null;
@@ -127,7 +132,6 @@ const loginUser = async (req, res) => {
       await Session.deleteOne({ userId: user._id });
     }
 
-    await Session.create({ userId: user._id });
     const accessToken = jwt.sign(
       { userId: user._id },
       process.env.ACCESS_SECRET,
@@ -142,6 +146,7 @@ const loginUser = async (req, res) => {
         expiresIn: "7d",
       },
     );
+    await Session.create({ userId: user._id, refreshToken });
     user.isLoggedIn = true;
     await user.save();
 
@@ -187,7 +192,8 @@ const forgotPassword = async (req, res) => {
     }
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expire = new Date(Date.now() + 10 * 60 * 1000);
-    user.otp = otp;
+    const hashedOTP = await bcrypt.hash(otp, 10);
+    user.otp = hashedOTP;
     user.otpExpiry = expire;
     await user.save();
     await sendOtpMail(email, otp);
@@ -223,7 +229,7 @@ const verifyOTP = async (req, res) => {
     if (!user.otp || !user.otpExpiry) {
       return res.status(400).json({
         success: false,
-        message: "OTP not genrated or already verified",
+        message: "OTP not genrated",
       });
     }
     if (user.otpExpiry < new Date()) {
@@ -232,7 +238,8 @@ const verifyOTP = async (req, res) => {
         message: "OTP has expired. Please request a new one",
       });
     }
-    if (user.otp !== otp) {
+    const isMatch = await bcrypt.compare(otp, user.otp);
+    if (!isMatch) {
       return res.status(400).json({
         success: false,
         message: "Invalid OTP",
@@ -241,9 +248,15 @@ const verifyOTP = async (req, res) => {
     user.otp = null;
     user.otpExpiry = null;
     await user.save();
+    const passwordResetToken = jwt.sign(
+      { email: user.email },
+      process.env.PASSWORD_RESET_SECRET,
+      { expiresIn: "10m" },
+    );
     return res.status(200).json({
       success: true,
       message: "OTP verified successfuly",
+      passwordResetToken,
     });
   } catch (e) {
     res.status(500).json({
@@ -256,7 +269,6 @@ const verifyOTP = async (req, res) => {
 const changePassword = async (req, res) => {
   try {
     const { newPassword, confirmPassword } = req.body;
-    const email = req.params.email;
 
     if (!newPassword || !confirmPassword) {
       return res.status(400).json({
@@ -270,19 +282,7 @@ const changePassword = async (req, res) => {
         message: "Password do not match",
       });
     }
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-    if (user.otp !== null || user.otpExpiry !== null) {
-      return res.status(400).json({
-        success: false,
-        message: "Please verify your OTP first",
-      });
-    }
+    const user = req.user;
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     await user.save();
@@ -297,9 +297,72 @@ const changePassword = async (req, res) => {
     });
   }
 };
-const refreshToken = async (req, res) => {
+const refreshTokenController = async (req, res) => {
   try {
-  } catch (e) {}
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Refresh token is required",
+      });
+    }
+    try {
+      const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
+
+      const user = await User.findById(decoded.userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+      if (!user.isLoggedIn) {
+        return res.status(401).json({
+          success: false,
+          message: "User is not logged in. Please login again",
+        });
+      }
+      const session = await Session.findOne({ userId: user._id });
+      if (!session) {
+        return res.status(401).json({
+          success: false,
+          message: "Session expired. Please login again",
+        });
+      }
+      if (session.refreshToken !== refreshToken) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid refresh token ",
+        });
+      }
+      const newAccessToken = jwt.sign(
+        { userId: user._id },
+        process.env.ACCESS_SECRET,
+        { expiresIn: "1h" },
+      );
+      return res.status(200).json({
+        success: true,
+        message: "Token refreshed successfully",
+        accessToken: newAccessToken,
+      });
+    } catch (err) {
+      if (err.name === "TokenExpiredError") {
+        return res.status(401).json({
+          success: false,
+          message: "Refresh token expired. please login again",
+        });
+      }
+      return res.status(401).json({
+        success: false,
+        message: "Invalid refresh token",
+      });
+    }
+  } catch (e) {
+    return res.status(500).json({
+      success: false,
+      message: e.message,
+    });
+  }
 };
 module.exports = {
   registerUser,
@@ -309,5 +372,5 @@ module.exports = {
   forgotPassword,
   verifyOTP,
   changePassword,
-  refreshToken,
+  refreshTokenController,
 };
