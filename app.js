@@ -23,27 +23,38 @@ const loginLimiter = rateLimt({
   windowMs: 15 * 60 * 1000,
   max: 5,
   message: "Too many login attempts, please try again later",
-  standerHeaders: true,
+  standardHeaders: true,
   legacyHeaders: false,
 });
 
-const registerLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+const registerLimiter = rateLimt({
+  windowMs: 60 * 60 * 1000,
   max: 5,
-  message: "Too many register attempts, please try again later",
-  standerHeaders: true,
-  legacyHeaders: false,
+  message: "Too many accounts created from this IP, please try again later",
+});
+const apiLimter = rateLimt({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
 });
 
-app.use(express.json());
+app.use(express.json({ limit: "3mb" }));
 
-app.use("/api/v1/tasks", tasks);
+app.use("/api/v1/tasks", apiLimter, tasks);
+
+app.use("/user/register", registerLimiter);
+app.use("/user/login", loginLimiter);
 app.use("/user", userRout);
+
+app.use("*", (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
+});
 
 const start = async () => {
   try {
     const mongouri = `mongodb://${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${process.env.MONGO_INITDB_DATABASE}`;
-    console.log(mongouri);
     await connectDB(mongouri);
     console.log("connected to db");
     const APP_PORT = process.env.APP_PORT;

@@ -22,7 +22,7 @@ const loginSchema = z.object({
   email: z.email("Invalid email").toLowerCase(),
   password: z.string().min(8, "Password is required"),
 });
-const PasswordSchema = z.object({
+const passwordSchema = z.object({
   newPassword: z
     .string()
     .min(8, "Password must be at least 8 characters")
@@ -34,6 +34,15 @@ const PasswordSchema = z.object({
       "Password must contain at least one special character",
     ),
   confirmPassword: z.string(),
+});
+const emailSchema = z.object({
+  email: z.email("Invalid email address").toLowerCase(),
+});
+const otpSchema = z.object({
+  otp: z
+    .string()
+    .length(6, "OTP must be exactly 6 digits")
+    .regex(/^[0-9]{6}$/, "OTP must contain only numbers"),
 });
 
 const validateUser = (schema) => async (req, res, next) => {
@@ -52,4 +61,6 @@ module.exports = {
   userSchema,
   loginSchema,
   passwordSchema,
+  emailSchema,
+  otpSchema,
 };

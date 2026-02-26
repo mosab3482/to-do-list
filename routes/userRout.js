@@ -17,6 +17,8 @@ const {
   userSchema,
   loginSchema,
   passwordSchema,
+  emailSchema,
+  otpSchema,
 } = require("../validators/userValidate");
 
 router.post("/register", validateUser(userSchema), registerUser);
@@ -25,8 +27,8 @@ router.post("/verify", verifiction);
 router.post("/login", validateUser(loginSchema), loginUser);
 router.post("/logout", isAuthenticated, logoutUser);
 
-router.post("/forgot-password", forgotPassword);
-router.post("/verify-otp/:email", verifyOTP);
+router.post("/forgot-password", validateUser(emailSchema), forgotPassword);
+router.post("/verify-otp/:email", validateUser(otpSchema), verifyOTP);
 router.post(
   "/change-password/:email",
   validateUser(passwordSchema),
