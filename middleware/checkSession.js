@@ -17,4 +17,8 @@ const checkSession = async (req, res, next) => {
     });
   }
 };
+userSchema.index(
+  { createdAt: 1 },
+  { expireAfterSeconds: 600, partialFilterExpression: { isVerified: false } },
+);
 module.exports = checkSession;
