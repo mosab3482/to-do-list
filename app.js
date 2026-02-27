@@ -41,9 +41,9 @@ app.use(express.json({ limit: "3mb" }));
 
 app.use("/api/v1/tasks", apiLimter, tasks);
 
-app.use("/user/register", registerLimiter);
-app.use("/user/login", loginLimiter);
-app.use("/user", userRout);
+app.use("api/v1/user/register", registerLimiter);
+app.use("api/v1/user/login", loginLimiter);
+app.use("api/v1/user", userRout);
 
 app.use("*", (req, res) => {
   res.status(404).json({
